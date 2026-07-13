@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: vocab-app-backend
+
+  profiles:
+    active: local
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
