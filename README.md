@@ -6,7 +6,7 @@
 
 ## 项目状态
 
-当前已完成前端 MVP，后端业务接口待实现。
+当前已完成前端 MVP、后端业务 API 与数据库基础模型，可进入本地 MySQL 联调阶段。
 
 已完成：
 
@@ -15,21 +15,21 @@
 - [x] Spring Boot 4 后端项目初始化
 - [x] MySQL 数据库连接配置
 - [x] Flyway 数据库迁移配置
-- [x] 用户表初始迁移
+- [x] 用户、词库、学习进度与复习记录迁移
 - [x] 登录、注册与页面权限路由
 - [x] 今日学习、新词、复习、词库、统计和设置页面
 - [x] Mock API 与真实接口切换层
 - [x] 前后端接口文档
+- [x] 后端用户注册、登录与访问令牌鉴权
+- [x] 后端单词库查询与详情
+- [x] 学习队列、间隔复习与幂等答题记录
+- [x] 学习首页与统计接口
+- [x] H2 接口契约集成测试
 
 计划实现：
 
-- [ ] 后端用户注册
-- [ ] 后端登录与 JWT 身份认证
-- [ ] 后端单词库管理
-- [ ] 后端学习与复习算法
-- [ ] 后端用户学习进度
-- [ ] 后端学习统计
 - [ ] 四六级与高考词表差集处理
+- [ ] 正式词库数据清洗、许可核验与批量导入
 
 ## 技术栈
 
@@ -95,7 +95,7 @@
 
 前端预留接口、请求响应示例、错误码和联调约定见 [`docs/API.md`](docs/API.md)。
 
-后端尚未实现时，前端通过 `VITE_USE_MOCK=true` 使用演示数据；接口完成后改为 `false` 即可联调。
+前端通过 `VITE_USE_MOCK=true` 使用演示数据；启动 MySQL 和后端后改为 `false` 即可联调。
 
 ## 本地地址
 
@@ -106,7 +106,7 @@
 | 健康检查 | `http://localhost:8080/api/actuator/health` |
 | MySQL | `localhost:3306` |
 
-由于 Spring Security 尚未完成业务配置，访问部分后端地址时可能返回 `401 Unauthorized`。这通常表示后端已经启动，但请求被默认安全规则拦截。
+除注册、登录、刷新令牌和健康检查外，其余接口必须携带 `Authorization: Bearer <accessToken>`。
 
 ## 环境要求
 
@@ -194,6 +194,15 @@ mvnw.cmd spring-boot:run
 http://localhost:8080/api
 ```
 
+本地开发会创建演示账号（可通过环境变量关闭或修改）：
+
+```text
+账号：demo
+密码：123456
+```
+
+相关环境变量为 `DEMO_DATA_ENABLED`、`DEMO_PASSWORD`、`JWT_SECRET`。生产环境必须设置独立的强 `JWT_SECRET`，并关闭演示数据。
+
 停止服务：
 
 ```text
@@ -268,13 +277,12 @@ npm.cmd run type-check
 
 ### 后端测试
 
-运行测试前先设置数据库密码：
-
 ```cmd
 cd backend
-set "DB_PASSWORD=你的数据库密码"
 mvnw.cmd test
 ```
+
+测试使用内存 H2 数据库，不需要本地 MySQL 密码；集成测试会覆盖接口文档中的完整主流程。
 
 ### 后端打包
 
@@ -301,10 +309,8 @@ backend/src/main/resources/db/migration/
 
 ```text
 V1__create_users.sql
-V2__create_words.sql
-V3__create_word_details.sql
-V4__create_user_word_progress.sql
-V5__create_review_logs.sql
+V2__create_vocabulary_and_study_tables.sql
+V3__seed_demo_words.sql
 ```
 
 已经在数据库中执行过的迁移文件不应直接修改。需要调整数据库结构时，应增加新的迁移文件。
@@ -397,20 +403,15 @@ git diff --cached
 
 ## 后续开发顺序
 
-1. 配置 Spring Security。
-2. 实现用户实体与 Repository。
-3. 实现用户注册和密码加密。
-4. 实现登录和 JWT。
-5. 创建 Vue 登录、注册页面。
-6. 建立单词库数据结构。
-7. 实现单词搜索和详情。
-8. 实现每日学习任务。
-9. 实现复习计划与学习记录。
-10. 实现统计页面。
-11. 导入并校验正式词库。
+1. 在本地 MySQL 执行 Flyway 迁移并完成前后端联调。
+2. 确定四级、六级和高考词表的版本及许可。
+3. 编写差集、词形归一化和数据质量检查程序。
+4. 批量导入正式词库与来源信息。
+5. 扩充复习算法测试和接口性能测试。
+6. 配置生产环境 HTTPS、强 JWT 密钥和 Secure Cookie。
 
 ## License
 
 项目许可证尚未确定。
 
-在仓库添加正式 `LICENSE` 文件之前，请勿假设项目代码或词库数据可以被自由复制、分发或商用。# -app
+在仓库添加正式 `LICENSE` 文件之前，请勿假设项目代码或词库数据可以被自由复制、分发或商用。
